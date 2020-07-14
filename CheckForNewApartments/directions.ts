@@ -147,7 +147,7 @@ function getMessageForPlaceTravel(apartment: Apartment, directionsForPlace: Dire
     getMessageLinesForTravelMode(place, mode, response).forEach(line => lines.push(line));
   });
 
-  const link = formatGoogleMapsLink(apartment.address, place.address, place.transitOptions);
+  const link = formatGoogleMapsLink(apartment.addressComponents, place.address, place.transitOptions);
   lines.push(`<b>Link:</b> ${link}`)
 
   return lines.join('\n');
@@ -272,16 +272,19 @@ function formatDuration(durationSec: number): string {
   return parts.join(' ');
 }
 
-function formatGoogleMapsLink(address1: FullAddress, address2: FullAddress, transitOptions: TransitOptions): string {
+function formatGoogleMapsLink(address1Comp: AddressComponents, address2: FullAddress, transitOptions: TransitOptions): string {
   // https://stackoverflow.com/questions/11354211/google-maps-query-parameter-clarification
   // https://developers.google.com/maps/documentation/urls/guide#directions-action
   const waypoints = transitOptions.waypoints || [];
 
+  const address1 = `${address1Comp.street}, ${address1Comp.postalCode} ${address1Comp.city}`;
   return [
     'https://www.google.com/maps/dir/?api=1',
     `&origin=${encodeURIComponent(address1)}`,
     `&destination=${encodeURIComponent(address2)}`,
-    `&waypoints=${encodeURIComponent(waypoints.join('|'))}`,
+    waypoints && waypoints.length > 0
+      ? `&waypoints=${encodeURIComponent(waypoints.join('|'))}`
+      : '',
   ].join('');
 }
 

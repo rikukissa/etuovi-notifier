@@ -46,21 +46,20 @@ export async function run(logger: ILogger) {
       })
     );
 
-    const etuoviMsgs = findEtuoviMessages(msgs);
-    if (etuoviMsgs.length === 0) {
+    const etuoviNewApartmentsForSale = findEtuoviMessages(msgs, /uusi.*asunto/i);
+    const etuoviNewShows = findEtuoviMessages(msgs, /asuntoesittely/i);
+    if (etuoviNewApartmentsForSale.length === 0 && etuoviNewShows.length === 0) {
       logger.info("No unread etuovi messages");
     }
 
-    const apartments = etuoviMsgs
-      .map(parsePayload)
-      .map(parseApartmentsFromEmail)
-      .reduce((all, curr) => all.concat(curr), []);
+    const forSale = messagesToAparments(etuoviNewApartmentsForSale);
+    const forShow = messagesToAparments(etuoviNewShows);
 
-    const directionsForApartments = await findDirectionsForApartments(apartments);
+    if (forSale.length > 0) {
+      logger.info("Sending new apartments", forSale.map(apt => apt.url).join(", "));
 
-    if (apartments.length > 0) {
-      logger.info("Sending new targets", apartments.map(apt => apt.url).join(", "));
-      await mapSeriesAsync(apartments, async apartment => {
+      const directionsForApartments = await findDirectionsForApartments(forSale);
+      await mapSeriesAsync(forSale, async apartment => {
         const street = apartment.addressComponents.street;
         const cityPart = apartment.addressComponents.cityPart;
         const initialMsg = `<b>New apartment at ${street}, ${cityPart}</b>\n${apartment.url}`;
@@ -77,7 +76,23 @@ export async function run(logger: ILogger) {
       })
     }
 
+    if (forShow.length > 0) {
+      logger.info("Sending new shows", forShow.map(apt => apt.url).join(", "));
+      await mapSeriesAsync(forShow, async apartment => {
+        const street = apartment.addressComponents.street;
+        const cityPart = apartment.addressComponents.cityPart;
+        const initialMsg = `<b>There will be an apartment showing soon at ${street}, ${cityPart}.</b>\n${apartment.url}`;
+        await telegramClient.sendMsg(config.telegramBotChannel, initialMsg);
+      });
+    }
+
     await markAsRead(gmail, msgs.map(m => m.data.id));
+  }
+
+  function messagesToAparments(msgs: GaxiosResponse<gmail_v1.Schema$Message>[]): Apartment[] {
+    return msgs.map(parsePayload)
+      .map(parseApartmentsFromEmail)
+      .reduce((all, curr) => all.concat(curr), []);
   }
 
   function markAsRead(gmail: gmail_v1.Gmail, msgIds: string[]) {
@@ -92,13 +107,17 @@ export async function run(logger: ILogger) {
     });
   }
 
-  function findEtuoviMessages(msgs: GaxiosResponse<gmail_v1.Schema$Message>[]) {
+  function findEtuoviMessages(msgs: GaxiosResponse<gmail_v1.Schema$Message>[], subjectPattern: RegExp) {
     return msgs.filter(msg => {
       const fromHeader = msg!.data!.payload!.headers!.find(
         h => h.name === "From"
       );
-
-      return fromHeader && fromHeader.value!.includes("@etuovi.com");
+      const isCorrectFrom = fromHeader && fromHeader.value!.includes("@etuovi.com");
+      const subjectHeader = msg!.data!.payload!.headers!.find(
+        h => h.name === "Subject"
+      );
+      const isCorrectSubject = subjectHeader && subjectPattern.test(subjectHeader.value!);
+      return isCorrectFrom && isCorrectSubject;
     });
   }
 

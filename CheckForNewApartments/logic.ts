@@ -178,13 +178,19 @@ export function parseApartmentsFromEmail(html: string): Apartment[] {
   return uniqUrls.map(url => apartments.find(apt => apt.url === url)) as Apartment[];
 }
 
+// Examples:
+// Leikkikuja 4 as 3, 14700, Kirkonkylä, Hämeenlinna, Suomi
+// Huvilinnanmäki 8 A, 02600, Leppävaara, Espoo, Suomi
+// Kalevanvainio 1 C 16, 02100, Tapiola, Aarnivalkea, Espoo, Suomi
 export function parseAddressToComponents(address: FullAddress): AddressComponents {
   const parts = address.split(',');
+  const lastIndex = parts.length - 1;
   return {
     street: parts[0].trim(),
     postalCode: parts[1].trim(),
     cityPart: parts[2].trim(),
-    city: parts[3].trim(),
-    country: parts[4].trim(),
+    // Not sure what "Aarnivalkea" would be
+    city: parts[lastIndex - 1].trim(),
+    country: parts[lastIndex].trim(),
   };
 }

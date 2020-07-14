@@ -124,10 +124,10 @@ function getMessageForPlaceTravel(apartment: Apartment, directionsForPlace: Dire
   const place = PLACES.find(p => p.id === directionsForPlace.placeId) as Place;
   const hasWayPoints = place.transitOptions && place.transitOptions.waypoints && place.transitOptions.waypoints.length > 0;
   const wayPointAddition = hasWayPoints
-    ? `via ${place.transitOptions?.waypoints?.length} waypoints`
+    ? ` via ${place.transitOptions?.waypoints?.length} waypoints`
     : '';
   const niceAddress = `${apartment.addressComponents.street}, ${apartment.addressComponents.cityPart}`;
-  lines.push(`<b>Travel from ${niceAddress} to ${directionsForPlace.placeId} ${wayPointAddition}</b>`);
+  lines.push(`<b>${directionsForPlace.placeId} (from ${niceAddress}${wayPointAddition})</b>`);
 
   const responses = directionsForPlace.directionsResponses
     .map((response, index) => {

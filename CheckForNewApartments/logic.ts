@@ -6,7 +6,7 @@ import { ILogger } from "./models";
 import { createClient } from "./telegram";
 import * as cheerio from "cheerio";
 import { URL } from "url";
-import { Apartment, AddressComponents, FullAddress } from "./types";
+import { Apartment, AddressComponents, FullAddress, DirectionsForApartment } from "./types";
 import { getMessagesForTravels, findDirectionsForApartments } from "./directions";
 import { mapSeriesAsync } from "./util";
 
@@ -60,33 +60,38 @@ export async function run(logger: ILogger) {
 
       const directionsForApartments = await findDirectionsForApartments(forSale);
       await mapSeriesAsync(forSale, async apartment => {
-        const street = apartment.addressComponents.street;
-        const cityPart = apartment.addressComponents.cityPart;
-        const initialMsg = `<b>New apartment at ${street}, ${cityPart}</b>\n${apartment.url}`;
-        const res = await telegramClient.sendMsg(config.telegramBotChannel, initialMsg);
-        const messageId = res.data.result.message_id;
-
-        const messages = getMessagesForTravels(apartment, directionsForApartments);
-        await mapSeriesAsync(messages, async message => {
-          await telegramClient.sendMsg(config.telegramBotChannel, message);
-        });
-
-        const endMessage = `<b>That's all about ${street}, ${cityPart}.</b>`;
-        await telegramClient.sendMsg(config.telegramBotChannel, endMessage);
-      })
+        const friendlyAddr = getFriendlyAddress(apartment);
+        const startMsg = `<b>New apartment at ${friendlyAddr}!</b>\n${apartment.url}`;
+        const endMsg = `<b>That's all about ${friendlyAddr}.</b>`;
+        await sendApartment(startMsg, endMsg, apartment, directionsForApartments);
+      });
     }
 
     if (forShow.length > 0) {
       logger.info("Sending new shows", forShow.map(apt => apt.url).join(", "));
+
+      const directionsForApartments = await findDirectionsForApartments(forShow);
       await mapSeriesAsync(forShow, async apartment => {
-        const street = apartment.addressComponents.street;
-        const cityPart = apartment.addressComponents.cityPart;
-        const initialMsg = `<b>There will be an apartment showing soon at ${street}, ${cityPart}.</b>\n${apartment.url}`;
-        await telegramClient.sendMsg(config.telegramBotChannel, initialMsg);
+        const friendlyAddr = getFriendlyAddress(apartment);
+        const startMsg = `<b>There will be an apartment showing soon at ${friendlyAddr}.</b>\n${apartment.url}`;
+        const endMsg = `<b>That's all about ${friendlyAddr}. Check out the showing times via Etuovi.</b>`;
+        await sendApartment(startMsg, endMsg, apartment, directionsForApartments);
       });
     }
 
     await markAsRead(gmail, msgs.map(m => m.data.id));
+  }
+
+  async function sendApartment(startMsg: string, endMsg: string, apartment: Apartment, directionsForApartments: DirectionsForApartment[]) {
+    const res = await telegramClient.sendMsg(config.telegramBotChannel, startMsg);
+    const messageId = res.data.result.message_id;
+
+    const messages = getMessagesForTravels(apartment, directionsForApartments);
+    await mapSeriesAsync(messages, async message => {
+      await telegramClient.sendMsg(config.telegramBotChannel, message);
+    });
+
+    await telegramClient.sendMsg(config.telegramBotChannel, endMsg, messageId);
   }
 
   function messagesToAparments(msgs: GaxiosResponse<gmail_v1.Schema$Message>[]): Apartment[] {
@@ -176,6 +181,12 @@ export function parseApartmentsFromEmail(html: string): Apartment[] {
   const uniqUrls = Array.from(new Set(apartments.map(apt => apt.url)));
   // Can't be undefined
   return uniqUrls.map(url => apartments.find(apt => apt.url === url)) as Apartment[];
+}
+
+function getFriendlyAddress(apartment: Apartment) {
+  const street = apartment.addressComponents.street;
+  const cityPart = apartment.addressComponents.cityPart;
+  return `${street}, ${cityPart}`;
 }
 
 // Examples:

@@ -5,10 +5,12 @@ import { config } from "./config";
 import { ILogger } from "./models";
 import { createClient } from "./telegram";
 import * as cheerio from "cheerio";
+import MailComposer from 'nodemailer/lib/mail-composer';
 import { URL } from "url";
 import { Apartment, AddressComponents, FullAddress, DirectionsForApartment } from "./types";
 import { getMessagesForTravels, findDirectionsForApartments } from "./directions";
 import { mapSeriesAsync } from "./util";
+import { downloadApartmentPdfs, ApartmentPdfs } from "./scraper";
 
 export async function run(logger: ILogger) {
   const telegramClient = createClient(config.telegramBotToken);
@@ -21,9 +23,10 @@ export async function run(logger: ILogger) {
   );
 
   oAuth2Client.setCredentials(config.googleToken);
-  await getUnread(oAuth2Client);
+  await processUnread(oAuth2Client);
 
-  async function getUnread(auth) {
+  async function processUnread(auth) {
+    // https://googleapis.dev/nodejs/googleapis/latest/gmail/index.html
     const gmail = google.gmail({ version: "v1", auth });
     const res = await gmail.users.messages.list({
       userId: "me",
@@ -59,11 +62,16 @@ export async function run(logger: ILogger) {
       logger.info("Sending new apartments", forSale.map(apt => apt.url).join(", "));
 
       const directionsForApartments = await findDirectionsForApartments(forSale);
-      await mapSeriesAsync(forSale, async apartment => {
+      await mapSeriesAsync(forSale, async (apartment) => {
         const friendlyAddr = getFriendlyAddress(apartment);
         const startMsg = `<b>New apartment or change at ${friendlyAddr}!</b>\n${apartment.url}`;
         const endMsg = `<b>That's all about ${friendlyAddr}.</b>`;
         await sendApartment(startMsg, endMsg, apartment, directionsForApartments);
+
+        if (config.saveApartmentPdfs) {
+          const pdfs = await downloadApartmentPdfs(apartment);
+          await sendPdfs(gmail, apartment, pdfs);
+        }
       });
     }
 
@@ -80,6 +88,45 @@ export async function run(logger: ILogger) {
     }
 
     await markAsRead(gmail, msgs.map(m => m.data.id));
+  }
+
+  // More low-level example here:
+  // https://github.com/googleapis/google-api-nodejs-client/blob/ccdbdb7cae64acd6445b9fa20761502d778fd1e3/samples/gmail/send.js
+  async function sendPdfs(gmail: gmail_v1.Gmail, apartment: Apartment, pdfs: ApartmentPdfs): Promise<GaxiosResponse<gmail_v1.Schema$Message>> {
+    const profile = (await gmail.users.getProfile({ userId: 'me' })).data;
+    const aptFileId = apartment.id.replace(/\//g, '');
+    const mail = new MailComposer({
+      from: `${profile.emailAddress} <${profile.emailAddress}>`,
+      to: `${profile.emailAddress} <${profile.emailAddress}>`,
+      subject: `PDF files from ${apartment.address}`,
+      text: `Etuovi snapshots for ${apartment.url}. Address: ${apartment.address}`,
+      textEncoding: 'base64',
+      attachments: [
+        {
+          filename: `apartment-${aptFileId}.pdf`,
+          content: pdfs.apartmentPdf.toString('base64'),
+          encoding: 'base64'
+        },
+        {
+          filename: `images-${aptFileId}.pdf`,
+          content: pdfs.imagesPdf.toString('base64'),
+          encoding: 'base64'
+        },
+        {
+          filename: `apartment-${aptFileId}.html`,
+          content: pdfs.apartmentHtml,
+        },
+      ]
+    });
+    const raw = await mail.compile().build();
+    const res = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: raw.toString('base64'),
+      },
+    });
+
+    return res;
   }
 
   async function sendApartment(startMsg: string, endMsg: string, apartment: Apartment, directionsForApartments: DirectionsForApartment[]) {
@@ -114,16 +161,17 @@ export async function run(logger: ILogger) {
 
   function findEtuoviMessages(msgs: GaxiosResponse<gmail_v1.Schema$Message>[], subjectPattern: RegExp) {
     return msgs.filter(msg => {
-      const fromHeader = msg!.data!.payload!.headers!.find(
-        h => h.name === "From"
-      );
-      const isCorrectFrom = fromHeader && fromHeader.value!.includes("@etuovi.com");
-      const subjectHeader = msg!.data!.payload!.headers!.find(
-        h => h.name === "Subject"
-      );
-      const isCorrectSubject = subjectHeader && subjectPattern.test(subjectHeader.value!);
+      const fromHeader = getHeader(msg, 'From');
+      const isCorrectFrom = fromHeader && fromHeader.includes("@etuovi.com");
+      const subjectHeader = getHeader(msg, 'Subject');
+      const isCorrectSubject = subjectHeader && subjectPattern.test(subjectHeader);
       return isCorrectFrom && isCorrectSubject;
     });
+  }
+
+  function getHeader(msg: GaxiosResponse<gmail_v1.Schema$Message>, name: string): string | undefined {
+    const header = msg!.data!.payload!.headers!.find(h => h.name === name);
+    return header?.value;
   }
 
   function parsePayload(msg: GaxiosResponse<gmail_v1.Schema$Message>) {

@@ -6,7 +6,7 @@ const telegramClient = createClient(config.telegramBotToken);
 
 run(console as any)
   .catch(async err => {
-    const tgMsg = `<b>Error when checking apartments:</b> ${err.message}`;
+    const tgMsg = `<b>Error:</b> ${err.message}`;
     await telegramClient.sendMsg(config.telegramBotChannel, tgMsg);
 
     if (err.response) {

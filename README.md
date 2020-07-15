@@ -27,13 +27,24 @@ cp .env-sample .env
 ```json
 [
   "https://www.googleapis.com/auth/gmail.readonly",
-  "https://www.googleapis.com/auth/gmail.modify"
+  "https://www.googleapis.com/auth/gmail.modify",
+  "https://www.googleapis.com/auth/gmail.send"
 ]
 ```
+
+`gmail.send` is only needed if you enable PDF downloading.
 
 - `GOOGLE_MAPS_KEY`: string (not base64 encoded) of Google Maps API key. You need to enable Directions API and add API Key credentials in Google Cloud Console. See https://developers.google.com/maps/documentation/directions/start
 
 Note that Google Directions API might cost in high volumes. The cost should be very minimal unless you are doing thousands of queries.
+
+**Optional setup**
+
+If you want the bot to send PDF snapshots of the Etuovi apartment pages for archiving:
+
+- `SAVE_APARTMENT_PDFS=true` to enable PDF saving
+- `PDF_API_URL`: The base url where [url-to-pdf-api](https://github.com/alvarcarto/url-to-pdf-api) service is hosted.
+- `PDF_API_TOKEN`: Token for Url to PDF API (sent as `x-api-key`)
 
 
 2. Edit the places ([places.ts](CheckForNewApartments/place.ts)) you are often traveling from your apartment. Could be your work via car, hobby via bicycle, etc. Waypoints can be added but please note that Google doesn't support them in public transit. The arrival time can be spcified for public transit (for example 9AM Monday).

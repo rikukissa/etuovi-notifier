@@ -61,7 +61,7 @@ export async function run(logger: ILogger) {
       const directionsForApartments = await findDirectionsForApartments(forSale);
       await mapSeriesAsync(forSale, async apartment => {
         const friendlyAddr = getFriendlyAddress(apartment);
-        const startMsg = `<b>New apartment at ${friendlyAddr}!</b>\n${apartment.url}`;
+        const startMsg = `<b>New apartment or change at ${friendlyAddr}!</b>\n${apartment.url}`;
         const endMsg = `<b>That's all about ${friendlyAddr}.</b>`;
         await sendApartment(startMsg, endMsg, apartment, directionsForApartments);
       });

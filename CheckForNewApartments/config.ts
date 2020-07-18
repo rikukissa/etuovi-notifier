@@ -1,6 +1,4 @@
-import { fstat } from "fs";
-
-const base64 = require("js-base64").Base64;
+import { Base64 as base64 } from "js-base64";
 
 function assertEnvVar(name: string): string {
   if (!process.env[name]) {

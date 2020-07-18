@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import assert from 'assert';
-import { parseApartmentsFromEmail } from '../CheckForNewApartments/logic';
+import { parseApartmentsFromEmail } from '../CheckForNewApartments/gmail';
 import { Apartment } from '../CheckForNewApartments/types';
 
 // Example email made with an Etuovi alert that notifies from any apartment in Finland

@@ -2,7 +2,7 @@ An Azure Function to check for new Etuovi emails in GMail and send links of apar
 
 ## Setup
 
-1. Create .env file and fill in the values
+### 1. Create .env file and fill in the values
 
 ```bash
 cp .env-sample .env
@@ -24,19 +24,21 @@ cp .env-sample .env
 
 - `ACCESS_TOKEN`: base64 encoded object of GMail OAuth2 access and refresh token. See `token.json` in [https://developers.google.com/gmail/api/quickstart/nodejs](https://developers.google.com/gmail/api/quickstart/nodejs). Needed scopes are:
 
-```json
-[
-  "https://www.googleapis.com/auth/gmail.readonly",
-  "https://www.googleapis.com/auth/gmail.modify",
-  "https://www.googleapis.com/auth/gmail.send"
-]
-```
+  ```json
+  [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.modify",
+    "https://www.googleapis.com/auth/gmail.send"
+  ]
+  ```
 
 `gmail.send` is only needed if you enable PDF downloading.
 
 - `GOOGLE_MAPS_KEY`: string (not base64 encoded) of Google Maps API key. You need to enable Directions API and add API Key credentials in Google Cloud Console. See https://developers.google.com/maps/documentation/directions/start
 
-Note that Google Directions API might cost in high volumes. The cost should be very minimal unless you are doing thousands of queries.
+  Note that Google Directions API might cost in high volumes. The cost should be very minimal unless you are doing thousands of queries.
+
+- `REDIS_URL`: string (not base64 encoded) of Redis connection URL. Redis is used to save sent messages into a store because Telegram doesn't allow message history access as a bot.
 
 **Optional setup**
 
@@ -47,23 +49,32 @@ If you want the bot to send PDF snapshots of the Etuovi apartment pages for arch
 - `PDF_API_TOKEN`: Token for Url to PDF API (sent as `x-api-key`)
 
 
-2. Edit the places ([places.ts](CheckForNewApartments/place.ts)) you are often traveling from your apartment. Could be your work via car, hobby via bicycle, etc. Waypoints can be added but please note that Google doesn't support them in public transit. The arrival time can be spcified for public transit (for example 9AM Monday).
+### 2. Edit the places
 
-3. Install the [Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools)
+Edit ([places.ts](CheckForNewApartments/place.ts)) to locations you are often traveling from your apartment. Could be your work via car, hobby via bicycle, etc. Waypoints can be added but please note that Google doesn't support them in public transit. The arrival time can be spcified for public transit (for example 9AM Monday).
 
-4. Install dependencies
+### 3. (Optional) Install the [Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools)
+
+[Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools) are needed if you use Azure functions for hosting.
+
+### 4. Install dependencies
 
 ```bash
 npm i
 ```
 
-5. Create an email notification in https://www.etuovi.com
+### 5. Setup Etuovi.com
+
+Create an apartment watch with email notification in https://www.etuovi.com.
 
 ## Run locally
 
-```bash
-npx ts-node ./scripts/checkForApartments.ts
-```
+* `docker-compose up -d` to start Redis server.
+* `npx ts-node ./scripts/checkForApartments.ts`
+
+### Clearing redis
+
+`npx ts-node ./scripts/clearRedis.ts`
 
 ## Deploy to Azure
 

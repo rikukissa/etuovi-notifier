@@ -1,4 +1,5 @@
 import { Base64 as base64 } from "js-base64";
+import 'dotenv/config';
 
 function assertEnvVar(name: string): string {
   if (!process.env[name]) {

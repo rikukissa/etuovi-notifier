@@ -1,8 +1,8 @@
 import { google } from "googleapis";
 import { config } from "./config";
 import { ILogger } from "./models";
-import { createClient } from "./telegram";
-import { Apartment, DirectionsForApartment } from "./types";
+import { createClient, TelegramMessage } from "./telegram";
+import { Apartment, DirectionsForApartment, ApartmentId } from "./types";
 import { getMessagesForTravels, findDirectionsForApartment } from "./directions";
 import { mapSeriesAsync } from "./util";
 import { downloadApartmentPdfs } from "./scraper";
@@ -41,10 +41,13 @@ export async function run(logger: ILogger, redisClient: RedisAbstraction) {
 
       const directionsForApartments = await mapSeriesAsync(forSale, findDirectionsForApartment);
       await mapSeriesAsync(forSale, async (apartment) => {
+        const replyToId = (await findPreviousMessage(apartment))?.message_id;
         const friendlyAddr = getFriendlyAddress(apartment);
-        const startMsg = `<b>New apartment or change at ${friendlyAddr}!</b>\n${apartment.url}`;
+        const startMsg = replyToId
+          ? `<b>Something changed at ${friendlyAddr}!</b>`
+          : `<b>New apartment at ${friendlyAddr}!</b>\n${apartment.url}`;
         const endMsg = `<b>That's all about ${friendlyAddr}.</b>`;
-        await sendApartment(startMsg, endMsg, apartment, directionsForApartments);
+        await sendApartment(startMsg, endMsg, apartment, directionsForApartments, replyToId);
 
         if (config.saveApartmentPdfs) {
           logger.info("Saving PDF snapshots ..");
@@ -59,10 +62,13 @@ export async function run(logger: ILogger, redisClient: RedisAbstraction) {
 
       const directionsForApartments = await mapSeriesAsync(forShow, findDirectionsForApartment);
       await mapSeriesAsync(forShow, async apartment => {
+        const replyToId = (await findPreviousMessage(apartment))?.message_id;
         const friendlyAddr = getFriendlyAddress(apartment);
-        const startMsg = `<b>There will be an apartment showing soon at ${friendlyAddr}.</b>\n${apartment.url}`;
+        const startMsg = replyToId
+          ? `<b>There will be an apartment showing soon at ${friendlyAddr}.</b>`
+          : `<b>There will be an apartment showing soon at ${friendlyAddr}.</b>\n${apartment.url}`;
         const endMsg = `<b>That's all about ${friendlyAddr}. Check out the showing times via Etuovi.</b>`;
-        await sendApartment(startMsg, endMsg, apartment, directionsForApartments);
+        await sendApartment(startMsg, endMsg, apartment, directionsForApartments, replyToId);
       });
     }
     const msgIds = unreadMessages.map(m => m.data.id);
@@ -80,14 +86,17 @@ export async function run(logger: ILogger, redisClient: RedisAbstraction) {
     return prevApt !== undefined;
   }
 
-  async function sendApartment(startMsg: string, endMsg: string, apartment: Apartment, directionsForApartments: DirectionsForApartment[]) {
-    const replyTo = await redisClient.findMessage(new RegExp(`${apartment.url}`));
-    const replyToId = replyTo?.message_id
+  async function findPreviousMessage(apartment: Apartment): Promise<TelegramMessage | undefined> {
+    const message = await redisClient.findMessage(new RegExp(`${apartment.url}`));
+    return message;
+  }
+
+  async function sendApartment(startMsg: string, endMsg: string, apartment: Apartment, directionsForApartments: DirectionsForApartment[], replyToId?: number) {
     const startRes = await telegramClient.sendMsg(config.telegramBotChannel, startMsg, replyToId);
     await redisClient.saveMessage(startRes.data.result);
     const messageId = startRes.data.result.message_id;
 
-    if (replyTo) {
+    if (replyToId) {
       return;
     }
 

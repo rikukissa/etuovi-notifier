@@ -1,0 +1,12 @@
+
+# https://hub.docker.com/_/redis
+
+redis:
+  image: redis:6
+  restart: always
+  volumes:
+    - redis:/data
+  ports:
+    # host_port:container_port
+    # If you want to expose the Redis to 4001 port in host machine, write "4001:6379"
+    - "6379:6379"

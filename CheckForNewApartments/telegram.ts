@@ -1,10 +1,24 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 
 export type TelegramClient = ReturnType<typeof createClient>;
+// https://core.telegram.org/bots/api#message
+
+export interface TelegramResponse<T> {
+  ok: boolean;
+  result: T;
+}
+
+export interface TelegramMessage {
+  // Integer. Unique message identifier inside this chat.
+  message_id: number;
+  // Optional. For text messages, the actual UTF-8 text of the message, 0-4096 characters
+  text: string;
+  [key: string]: any;
+}
 
 export const createClient = (token: string) => ({
-  sendMsg: async (chatId: string, msg: string, replyToId?: string) =>
-    await axios({
+  sendMsg: async function sendMsg(chatId: string, msg: string, replyToId?: number): Promise<AxiosResponse<TelegramResponse<TelegramMessage>>> {
+    const res = await axios({
       method: "post",
       url: `https://api.telegram.org/bot${token}/sendMessage`,
       params: {
@@ -15,7 +29,9 @@ export const createClient = (token: string) => ({
         // https://core.telegram.org/bots/api#html-style
         parse_mode: 'HTML',
         text: msg,
-        reply_to_message_id: replyToId,
+        reply_to_message_id: String(replyToId),
       }
-    })
+    });
+    return res;
+  }
 });

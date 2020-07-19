@@ -13,6 +13,7 @@ const googleToken = JSON.parse(base64.decode(assertEnvVar("ACCESS_TOKEN")));
 const telegramBotToken = assertEnvVar("TELEGRAM_BOT_TOKEN");
 const telegramBotChannel = assertEnvVar("TELEGRAM_BOT_CHANNEL");
 const googleMapsKey = assertEnvVar("GOOGLE_MAPS_KEY");
+const redisUrl = assertEnvVar("REDIS_URL");
 const saveApartmentPdfs = process.env.SAVE_APARTMENT_PDFS === "true";
 
 let pdfApiUrl;
@@ -34,4 +35,5 @@ export const config = {
   saveApartmentPdfs,
   pdfApiUrl,
   pdfApiToken,
+  redisUrl,
 };

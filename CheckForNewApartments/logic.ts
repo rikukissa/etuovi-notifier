@@ -3,12 +3,13 @@ import { config } from "./config";
 import { ILogger } from "./models";
 import { createClient } from "./telegram";
 import { Apartment, DirectionsForApartment } from "./types";
-import { getMessagesForTravels, findDirectionsForApartments } from "./directions";
+import { getMessagesForTravels, findDirectionsForApartment } from "./directions";
 import { mapSeriesAsync } from "./util";
 import { downloadApartmentPdfs } from "./scraper";
 import { findEtuoviMessages, messagesToAparments, getFriendlyAddress, sendPdfs, markAsRead, getMessages } from "./gmail";
+import { RedisAbstraction } from "./redis";
 
-export async function run(logger: ILogger) {
+export async function run(logger: ILogger, redisClient: RedisAbstraction) {
   const { client_secret, client_id, redirect_uris } = config.googleCredentials.installed;
   const oAuth2Client = new google.auth.OAuth2(
     client_id,
@@ -38,8 +39,7 @@ export async function run(logger: ILogger) {
     if (forSale.length > 0) {
       logger.info("Sending new apartments", forSale.map(apt => apt.url).join(", "));
 
-      // TODO: Make method only for singular object and use apts.map(findDirections)
-      const directionsForApartments = await findDirectionsForApartments(forSale);
+      const directionsForApartments = await mapSeriesAsync(forSale, findDirectionsForApartment);
       await mapSeriesAsync(forSale, async (apartment) => {
         const friendlyAddr = getFriendlyAddress(apartment);
         const startMsg = `<b>New apartment or change at ${friendlyAddr}!</b>\n${apartment.url}`;
@@ -57,7 +57,7 @@ export async function run(logger: ILogger) {
     if (forShow.length > 0) {
       logger.info("Sending new shows", forShow.map(apt => apt.url).join(", "));
 
-      const directionsForApartments = await findDirectionsForApartments(forShow);
+      const directionsForApartments = await mapSeriesAsync(forShow, findDirectionsForApartment);
       await mapSeriesAsync(forShow, async apartment => {
         const friendlyAddr = getFriendlyAddress(apartment);
         const startMsg = `<b>There will be an apartment showing soon at ${friendlyAddr}.</b>\n${apartment.url}`;
@@ -81,26 +81,23 @@ export async function run(logger: ILogger) {
   }
 
   async function sendApartment(startMsg: string, endMsg: string, apartment: Apartment, directionsForApartments: DirectionsForApartment[]) {
-    const res = await telegramClient.sendMsg(config.telegramBotChannel, startMsg);
-    const messageId = res.data.result.message_id;
+    const replyTo = await redisClient.findMessage(new RegExp(`${apartment.url}`));
+    const replyToId = replyTo?.message_id
+    const startRes = await telegramClient.sendMsg(config.telegramBotChannel, startMsg, replyToId);
+    await redisClient.saveMessage(startRes.data.result);
+    const messageId = startRes.data.result.message_id;
 
-    // Uncomment if you want to disable travel information sending for already sent
-    // apartments. This would be more useful if we had the previous telegram message id
-    // about the apartment, so it could be a reply to that. Unfortunately telegram bots
-    // can't access the message history. getUpdates only returns the messages from last 24 hours.
-    /*
-    const alreadySent = await hasTravelsBeenSent(apartment);
-    if (alreadySent) {
-      logger.info('Aparment has been already sent');
-      return
+    if (replyTo) {
+      return;
     }
-    */
 
     const messages = getMessagesForTravels(apartment, directionsForApartments);
     await mapSeriesAsync(messages, async message => {
-      await telegramClient.sendMsg(config.telegramBotChannel, message);
+      const travelRes = await telegramClient.sendMsg(config.telegramBotChannel, message);
+      await redisClient.saveMessage(travelRes.data.result);
     });
 
-    await telegramClient.sendMsg(config.telegramBotChannel, endMsg, messageId);
+    const endRes = await telegramClient.sendMsg(config.telegramBotChannel, endMsg, messageId);
+    await redisClient.saveMessage(endRes.data.result);
   }
 }

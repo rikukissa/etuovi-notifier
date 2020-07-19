@@ -70,7 +70,7 @@ async function fetchDirections(
 }
 
 function travelModeToLabel(mode: TravelMode): string  {
-  return {
+  const labelMap: { [e: string]: string } = {
     // Works in telegram HTML parsing mode
     // For codes see https://emojipedia.org/bicycle/
     // Bike example: code point U+1F6B2 -> &#xF6B2
@@ -78,7 +78,8 @@ function travelModeToLabel(mode: TravelMode): string  {
     [TravelMode.driving]: '&#x1F697',
     [TravelMode.transit]: '&#x1F68C',
     [TravelMode.walking]: '&#x1F6B6',
-  }[mode.toLowerCase()];
+  };
+  return labelMap[mode.toLowerCase()];
 }
 
 function arrivalTimeToUnix(arrivalTime: ArrivalTime): number {
@@ -110,7 +111,7 @@ async function findDirectionsForPlace(apartment: Apartment, place: Place): Promi
   };
 }
 
-async function findDirectionsForApartment(apartment: Apartment): Promise<DirectionsForApartment> {
+export async function findDirectionsForApartment(apartment: Apartment): Promise<DirectionsForApartment> {
   const directionsForPlaces = await mapSeriesAsync(PLACES, (place) => findDirectionsForPlace(apartment, place));
   return {
     apartmentId: apartment.id,
@@ -203,7 +204,8 @@ function getMessageLinesForTransit(leg: FixedRouteLeg): string[] {
   // Uncomment in case debug needed
   // console.log('Departure', departure.toISOString());
   lines.push(`o  Departure ${departure.format('HH:mm [on] ddd')} (${leg.departure_time.time_zone})`);
-  leg.steps.forEach((step: FixedDirectionsStep) => {
+  const steps = leg.steps as FixedDirectionsStep[];
+  steps.forEach((step) => {
     lines.push(`|  <i>${parseGoogleHtmlInstructions(step.html_instructions)} (${formatDuration(step.duration.value)}, ${formatDistance(step.distance.value)})</i>`);
   });
   const arrival = moment.unix(leg.arrival_time.value);
@@ -239,7 +241,7 @@ function parseGoogleHtmlInstructions(html: string): string {
   // Remove all div wrappers, and replace them with just their content.
   // There might be other tags in Google's instructions_html,
   // but it's not documented.
-  $('div').each(function() {
+  $('div').each(function(this: any) {
     $(this).replaceWith(($(this) as any).html());
   });
 
@@ -297,9 +299,4 @@ export function getMessagesForTravels(apartment: Apartment, directionsForApartme
   return directionsForApt.directionsForPlaces.map(directionsForPlace => {
     return getMessageForPlaceTravel(apartment, directionsForPlace);
   })
-}
-
-export async function findDirectionsForApartments(apartments: Apartment[]): Promise<DirectionsForApartment[]> {
-  const directionsForApartment = await mapSeriesAsync(apartments, findDirectionsForApartment);
-  return directionsForApartment;
 }

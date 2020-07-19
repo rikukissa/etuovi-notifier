@@ -13,7 +13,7 @@ async function downloadPdf(pageUrl: string): Promise<Buffer> {
   }).toString();
   const response = await fetch(`${config.pdfApiUrl}/api/render?${params}`, {
     headers: {
-      'x-api-key': config.pdfApiToken,
+      'x-api-key': config.pdfApiToken || '',
     },
   });
   const buf = await response.buffer();
@@ -29,7 +29,7 @@ async function downloadHtml(pageUrl: string): Promise<string> {
   }).toString();
   const response = await fetch(`${config.pdfApiUrl}/api/render?${params}`, {
     headers: {
-      'x-api-key': config.pdfApiToken,
+      'x-api-key': config.pdfApiToken || '',
     },
   });
   const buf = await response.buffer();

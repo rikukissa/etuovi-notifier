@@ -34,7 +34,7 @@ cp .env-sample .env
   ]
   ```
 
-`gmail.send` is only needed if you enable PDF downloading.
+  `gmail.send` is only needed if you enable PDF downloading.
 
 - `GOOGLE_MAPS_KEY`: string (not base64 encoded) of Google Maps API key. You need to enable Directions API and add API Key credentials in Google Cloud Console. See https://developers.google.com/maps/documentation/directions/start
 

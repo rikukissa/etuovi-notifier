@@ -1,5 +1,7 @@
 An Azure Function to check for new Etuovi emails in GMail and send links of apartments to Telegram
 
+![Screenshot](docs/screenshot.png)
+
 ## Setup
 
 ### 1. Create .env file and fill in the values

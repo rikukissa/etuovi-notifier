@@ -51,7 +51,7 @@ If you want the bot to send PDF snapshots of the Etuovi apartment pages for arch
 
 ### 2. Edit the places
 
-Edit ([places.ts](CheckForNewApartments/place.ts)) to locations you are often traveling from your apartment. Could be your work via car, hobby via bicycle, etc. Waypoints can be added but please note that Google doesn't support them in public transit. The arrival time can be spcified for public transit (for example 9AM Monday).
+Edit ([places.ts](CheckForNewApartments/places.ts)) to locations you are often traveling from your apartment. Could be your work via car, hobby via bicycle, etc. Waypoints can be added but please note that Google doesn't support them in public transit. The arrival time can be spcified for public transit (for example 9AM Monday).
 
 ### 3. (Optional) Install the [Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools)
 

@@ -69,6 +69,18 @@ npm i
 
 Create an apartment watch with email notification in https://www.etuovi.com.
 
+You can enable:
+
+* New apartment or change notifications
+* New apartment showing notifications
+
+The bot will remember all apartments it has sent to the channel, and only calculate the routes once. 
+For updates (changes or showings), it will send a reply to the original message like in the screenshot:
+
+![Screenshot](docs/reply.png)
+
+This makes the messaging less spammy.
+
 ## Run locally
 
 * `docker-compose up -d` to start Redis server.

@@ -1,4 +1,4 @@
-An Azure Function to check for new Etuovi emails in GMail and send links of apartments to Telegram
+An Azure Function or Heroku cron task to check for new Etuovi emails in GMail and send links of apartments to Telegram
 
 ![Screenshot](docs/screenshot.png)
 

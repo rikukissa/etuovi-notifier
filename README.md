@@ -47,9 +47,10 @@ cp .env-sample .env
 If you want the bot to send PDF snapshots of the Etuovi apartment pages for archiving:
 
 - `SAVE_APARTMENT_PDFS=true` to enable PDF saving
-- `PDF_API_URL`: The base url where [url-to-pdf-api](https://github.com/alvarcarto/url-to-pdf-api) service is hosted.
+- `PDF_API_URL`: The base url where [url-to-pdf-api](https://github.com/alvarcarto/url-to-pdf-api) service is hosted. The service is easiest to get running with the Deploy to Heroku button in the repository. The public demo is limited to certain urls, so self-hosted version is needed.
 - `PDF_API_TOKEN`: Token for Url to PDF API (sent as `x-api-key`)
 
+This is useful to refer back to previous apartments: what you liked about them and what you didn't.
 
 ### 2. Edit the places
 

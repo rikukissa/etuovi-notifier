@@ -60,8 +60,17 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   } else {
     const telegramClient = createClient(config.telegramBotToken);
     console.log(request.body);
-
-    await telegramClient.sendMsg(config.telegramBotChannel, request.body.html);
+    try {
+      await telegramClient.sendMsg(
+        config.telegramBotChannel,
+        request.body.html
+      );
+    } catch (error) {
+      await telegramClient.sendMsg(
+        config.telegramBotChannel,
+        "Odottamaton sähköposti, jota ei saatu käsiteltyä"
+      );
+    }
   }
 
   response.status(200).send({});

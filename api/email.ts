@@ -37,9 +37,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
         replyToId
       );
     });
-  }
-
-  if (forShow) {
+  } else if (forShow) {
     const directionsForApartments = await mapSeriesAsync(
       forShow,
       findDirectionsForApartment
@@ -59,6 +57,11 @@ export default async (request: VercelRequest, response: VercelResponse) => {
         replyToId
       );
     });
+  } else {
+    const telegramClient = createClient(config.telegramBotToken);
+    console.log(request.body.plain);
+
+    await telegramClient.sendMsg(config.telegramBotChannel, request.body.plain);
   }
 
   response.status(200).send({});

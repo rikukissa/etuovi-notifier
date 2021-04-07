@@ -13,14 +13,13 @@ cp .env-sample .env
 - `TELEGRAM_BOT_TOKEN`: string (not base64 encoded) of [Telegram bot](https://core.telegram.org/bots) token.
 - `TELEGRAM_BOT_CHANNEL`: string (not base64 encoded) of [Telegram channel](https://core.telegram.org/bots) ID.
 
-    For group chats: invite bot to a channel, make the channel a super group, promote bot as admin (so they can post there), and run:
+  For group chats: invite bot to a channel, make the channel a super group, promote bot as admin (so they can post there), and run:
 
-    ```
-    curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getUpdates"
-    ```
+  ```
+  curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getUpdates"
+  ```
 
-    There you can see the chat id of the group, that is the one needed.
-
+  There you can see the chat id of the group, that is the one needed.
 
 - `CREDENTIALS`: base64 encoded object of GMail OAuth2 client secrets. See `credentials.json` in [https://developers.google.com/gmail/api/quickstart/nodejs](https://developers.google.com/gmail/api/quickstart/nodejs).
 
@@ -54,7 +53,7 @@ This is useful to refer back to previous apartments: what you liked about them a
 
 ### 2. Edit the places
 
-Edit ([places.ts](CheckForNewApartments/places.ts)) to locations you are often traveling from your apartment. Could be your work via car, hobby via bicycle, etc. Waypoints can be added but please note that Google doesn't support them in public transit. The arrival time can be spcified for public transit (for example 9AM Monday).
+Edit ([places.ts](lib/places.ts)) to locations you are often traveling from your apartment. Could be your work via car, hobby via bicycle, etc. Waypoints can be added but please note that Google doesn't support them in public transit. The arrival time can be spcified for public transit (for example 9AM Monday).
 
 ### 3. (Optional) Install the [Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools)
 
@@ -72,10 +71,10 @@ Create an apartment watch with email notification in https://www.etuovi.com.
 
 You can enable:
 
-* New apartment or change notifications
-* New apartment showing notifications
+- New apartment or change notifications
+- New apartment showing notifications
 
-The bot will remember all apartments it has sent to the channel, and only calculate the routes once. 
+The bot will remember all apartments it has sent to the channel, and only calculate the routes once.
 For updates (changes or showings), it will send a reply to the original message like in the screenshot:
 
 ![Screenshot](docs/reply.png)
@@ -84,8 +83,8 @@ This makes the messaging less spammy.
 
 ## Run locally
 
-* `docker-compose up -d` to start Redis server.
-* `npx ts-node ./scripts/checkForApartments.ts`
+- `docker-compose up -d` to start Redis server.
+- `npx ts-node ./scripts/checkForApartments.ts`
 
 ### Clearing redis
 
@@ -103,12 +102,11 @@ func azure functionapp publish <appname>
 
 2. Configure the same env variables in `.env` to the function app
 
-
 ## Deploy to Heroku
 
 1. Create Heroku app
 1. Add environment variables
 1. Add Heroku Scheduler add-on, and configure `node -r ts-node/register --max-old-space-size=2048 ./scripts/checkForApartments.ts` as the task with comfortable interval.
 1. Add Papertrail add-on for browsing logs easily from browser
-1. Add new git remote for the Heroku app, for example `git remote add prod git@heroku.personal:my-app.git`. *(Requires heroku.personal host to SSH config as well.)*
+1. Add new git remote for the Heroku app, for example `git remote add prod git@heroku.personal:my-app.git`. _(Requires heroku.personal host to SSH config as well.)_
 1. `git push prod`

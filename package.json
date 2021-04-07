@@ -3,12 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "tsc",
-    "build:production": "npm run prestart && npm prune --production",
-    "watch": "tsc --w",
-    "prestart": "npm run build && func extensions install",
-    "start:host": "func start",
-    "start": "npm-run-all --parallel start:host watch",
+    "start": "vercel dev",
     "test": "jest"
   },
   "description": "",
@@ -19,6 +14,7 @@
     "@types/js-base64": "^3.0.0",
     "@types/node-fetch": "^2.5.7",
     "@types/nodemailer": "^6.4.0",
+    "@vercel/node": "^1.9.1",
     "axios": "^0.19.0",
     "cheerio": "^1.0.0-rc.3",
     "dotenv": "^8.2.0",
@@ -29,10 +25,10 @@
     "moment-timezone": "^0.5.31",
     "node-fetch": "^2.6.0",
     "nodemailer": "^6.4.10",
+    "vercel": "^21.3.3",
     "yesno": "^0.3.1"
   },
   "devDependencies": {
-    "@azure/functions": "^1.0.1-beta1",
     "@types/jest": "^26.0.4",
     "@types/node": "^12.6.9",
     "jest": "^26.1.0",

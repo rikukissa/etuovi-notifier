@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import "dotenv/config";
 import { Base64 as base64 } from "js-base64";
 
 function assertEnvVar(name: string): string {
@@ -9,8 +9,6 @@ function assertEnvVar(name: string): string {
   return process.env[name]!;
 }
 
-const googleCredentials = JSON.parse(base64.decode(assertEnvVar("CREDENTIALS")));
-const googleToken = JSON.parse(base64.decode(assertEnvVar("ACCESS_TOKEN")));
 const telegramBotToken = assertEnvVar("TELEGRAM_BOT_TOKEN");
 const telegramBotChannel = assertEnvVar("TELEGRAM_BOT_CHANNEL");
 const googleMapsKey = assertEnvVar("GOOGLE_MAPS_KEY");
@@ -22,16 +20,14 @@ let pdfApiToken;
 if (saveApartmentPdfs) {
   pdfApiToken = assertEnvVar("PDF_API_TOKEN");
   pdfApiUrl = assertEnvVar("PDF_API_URL");
-  if (pdfApiUrl.endsWith('/')) {
-    throw new Error('PDF_API_URL should not have a trailing slash');
+  if (pdfApiUrl.endsWith("/")) {
+    throw new Error("PDF_API_URL should not have a trailing slash");
   }
 }
 
 export const config = {
   telegramBotToken,
   telegramBotChannel,
-  googleCredentials,
-  googleToken,
   googleMapsKey,
   saveApartmentPdfs,
   pdfApiUrl,

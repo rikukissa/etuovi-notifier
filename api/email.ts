@@ -16,7 +16,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   const forShow = request.body.headers.subject.match(/asuntoesittely/i);
 
   if (forSale) {
-    const apartments = parseApartmentsFromEmail(request.body.plain);
+    const apartments = parseApartmentsFromEmail(request.body.html);
     const directionsForApartments = await mapSeriesAsync(
       apartments,
       findDirectionsForApartment
@@ -37,7 +37,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
       );
     });
   } else if (forShow) {
-    const apartments = parseApartmentsFromEmail(request.body.plain);
+    const apartments = parseApartmentsFromEmail(request.body.html);
     const directionsForApartments = await mapSeriesAsync(
       forShow,
       findDirectionsForApartment
@@ -61,7 +61,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     const telegramClient = createClient(config.telegramBotToken);
     console.log(request.body);
 
-    await telegramClient.sendMsg(config.telegramBotChannel, request.body.plain);
+    await telegramClient.sendMsg(config.telegramBotChannel, request.body.html);
   }
 
   response.status(200).send({});

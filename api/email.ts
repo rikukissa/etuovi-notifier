@@ -12,12 +12,11 @@ import { Apartment, DirectionsForApartment } from "../lib/types";
 import { mapSeriesAsync } from "../lib/util";
 
 export default async (request: VercelRequest, response: VercelResponse) => {
-  const apartments = parseApartmentsFromEmail(request.body.plain);
-
   const forSale = request.body.headers.subject.match(/uusi.*asunto/i);
   const forShow = request.body.headers.subject.match(/asuntoesittely/i);
 
   if (forSale) {
+    const apartments = parseApartmentsFromEmail(request.body.plain);
     const directionsForApartments = await mapSeriesAsync(
       apartments,
       findDirectionsForApartment
@@ -38,6 +37,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
       );
     });
   } else if (forShow) {
+    const apartments = parseApartmentsFromEmail(request.body.plain);
     const directionsForApartments = await mapSeriesAsync(
       forShow,
       findDirectionsForApartment
@@ -59,7 +59,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     });
   } else {
     const telegramClient = createClient(config.telegramBotToken);
-    console.log(request.body.plain);
+    console.log(request.body);
 
     await telegramClient.sendMsg(config.telegramBotChannel, request.body.plain);
   }

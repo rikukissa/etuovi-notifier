@@ -17,7 +17,12 @@ export interface TelegramMessage {
 }
 
 export const createClient = (token: string) => ({
-  sendMsg: async function sendMsg(chatId: string, msg: string, replyToId?: number): Promise<AxiosResponse<TelegramResponse<TelegramMessage>>> {
+  sendMsg: async function sendMsg(
+    chatId: string,
+    msg: string,
+    replyToId?: number,
+    opts: object = {}
+  ): Promise<AxiosResponse<TelegramResponse<TelegramMessage>>> {
     const res = await axios({
       method: "post",
       url: `https://api.telegram.org/bot${token}/sendMessage`,
@@ -27,11 +32,12 @@ export const createClient = (token: string) => ({
         //   Bad Request: can\'t parse entities: Character \'.\' is reserved and must
         //   be escaped with the preceding \'\\\''"
         // https://core.telegram.org/bots/api#html-style
-        parse_mode: 'HTML',
+        parse_mode: "HTML",
         text: msg,
         reply_to_message_id: String(replyToId),
-      }
+        ...opts,
+      },
     });
     return res;
-  }
+  },
 });

@@ -59,7 +59,7 @@ export default async (request: VercelRequest, response: VercelResponse) => {
     });
   } else {
     const telegramClient = createClient(config.telegramBotToken);
-    console.log(request.body);
+
     try {
       await telegramClient.sendMsg(
         config.telegramBotChannel,
@@ -112,17 +112,19 @@ async function sendApartment(
     await mapSeriesAsync(messages, async (message) => {
       const travelRes = await telegramClient.sendMsg(
         config.telegramBotChannel,
-        message
+        message,
+        messageId,
+        { disable_web_page_preview: true }
       );
       await redisClient.saveMessage(travelRes.data.result);
     });
 
-    const endRes = await telegramClient.sendMsg(
-      config.telegramBotChannel,
-      endMsg,
-      messageId
-    );
-    await redisClient.saveMessage(endRes.data.result);
+    // const endRes = await telegramClient.sendMsg(
+    //   config.telegramBotChannel,
+    //   endMsg,
+    //   messageId
+    // );
+    // await redisClient.saveMessage(endRes.data.result);
   });
 }
 

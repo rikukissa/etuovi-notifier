@@ -108,16 +108,21 @@ async function sendApartment(
       return;
     }
 
-    const messages = getMessagesForTravels(apartment, directionsForApartments);
-    await mapSeriesAsync(messages, async (message) => {
-      const travelRes = await telegramClient.sendMsg(
-        config.telegramBotChannel,
-        message,
-        messageId,
-        { disable_web_page_preview: true }
-      );
-      await redisClient.saveMessage(travelRes.data.result);
-    });
+    const message = getMessagesForTravels(
+      apartment,
+      directionsForApartments
+    ).join("<br />");
+
+    const travelRes = await telegramClient.sendMsg(
+      config.telegramBotChannel,
+      message,
+      messageId,
+      { disable_web_page_preview: true }
+    );
+    await redisClient.saveMessage(travelRes.data.result);
+
+    // await mapSeriesAsync(messages, async (message) => {
+    // });
 
     // const endRes = await telegramClient.sendMsg(
     //   config.telegramBotChannel,

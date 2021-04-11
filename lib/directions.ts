@@ -146,8 +146,15 @@ function getMessageForPlaceTravel(
     ? ` via ${place.transitOptions?.waypoints?.length} waypoints`
     : "";
   const niceAddress = `${apartment.addressComponents.street}, ${apartment.addressComponents.cityPart}`;
+
+  const link = formatGoogleMapsLink(
+    apartment.addressComponents,
+    place.address,
+    place.transitOptions
+  );
+
   lines.push(
-    `<b>${directionsForPlace.placeId} (from ${niceAddress}${wayPointAddition})</b>`
+    `<b>${directionsForPlace.placeId} <a href="${link}">(from ${niceAddress}${wayPointAddition})</a></b>`
   );
 
   const responses = directionsForPlace.directionsResponses.map(
@@ -172,13 +179,6 @@ function getMessageForPlaceTravel(
       lines.push(line)
     );
   });
-
-  const link = formatGoogleMapsLink(
-    apartment.addressComponents,
-    place.address,
-    place.transitOptions
-  );
-  lines.push(`<b>Link:</b> ${link}`);
 
   return lines.join("\n");
 }
@@ -224,7 +224,6 @@ function getMessageLinesForTravelMode(
   ];
   lines.push(lineParts.join(""));
 
-  lines.push("\n");
   return lines;
 }
 

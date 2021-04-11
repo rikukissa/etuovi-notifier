@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from "@vercel/node";
-import { gmail } from "googleapis/build/src/apis/gmail";
+
 import { config } from "../lib/config";
 import {
   findDirectionsForApartment,
@@ -37,7 +37,7 @@ const handler = async (request: VercelRequest, response: VercelResponse) => {
       findDirectionsForApartment
     );
     await mapSeriesAsync(apartments, async (apartment) => {
-      const replyToId = (await findPreviousMessage(apartment))?.message_id;
+      const replyToId = undefined; //(await findPreviousMessage(apartment))?.message_id;
       const friendlyAddr = getFriendlyAddress(apartment);
       const startMsg = replyToId
         ? `<b>Something changed at ${friendlyAddr}!</b>`
@@ -107,42 +107,16 @@ async function sendApartment(
   directionsForApartments: DirectionsForApartment[],
   replyToId?: number
 ) {
-  return withClient<void>(config.redisUrl, async (redisClient) => {
-    const startRes = await telegramClient.sendMsg(
-      config.telegramBotChannel,
-      startMsg,
-      replyToId
-    );
-    await redisClient.saveMessage(startRes.data.result);
-    const messageId = startRes.data.result.message_id;
+  const directions = getMessagesForTravels(
+    apartment,
+    directionsForApartments
+  ).join("\n\n");
 
-    if (replyToId) {
-      return;
-    }
-
-    const message = getMessagesForTravels(
-      apartment,
-      directionsForApartments
-    ).join("<br />");
-
-    const travelRes = await telegramClient.sendMsg(
-      config.telegramBotChannel,
-      message,
-      messageId,
-      { disable_web_page_preview: true }
-    );
-    await redisClient.saveMessage(travelRes.data.result);
-
-    // await mapSeriesAsync(messages, async (message) => {
-    // });
-
-    // const endRes = await telegramClient.sendMsg(
-    //   config.telegramBotChannel,
-    //   endMsg,
-    //   messageId
-    // );
-    // await redisClient.saveMessage(endRes.data.result);
-  });
+  return telegramClient.sendMsg(
+    config.telegramBotChannel,
+    startMsg + "\n" + directions,
+    replyToId
+  );
 }
 
 export function getFriendlyAddress(apartment: Apartment) {

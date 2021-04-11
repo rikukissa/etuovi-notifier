@@ -11,7 +11,22 @@ import { createClient, TelegramMessage } from "../lib/telegram";
 import { Apartment, DirectionsForApartment } from "../lib/types";
 import { mapSeriesAsync } from "../lib/util";
 
+const telegramClient = createClient(config.telegramBotToken);
 export default async (request: VercelRequest, response: VercelResponse) => {
+  try {
+    const res = handler(request, response);
+    return res;
+  } catch (error) {
+    await telegramClient.sendMsg(
+      config.telegramBotChannel,
+      error.message,
+      undefined,
+      { disable_web_page_preview: true }
+    );
+  }
+};
+
+const handler = async (request: VercelRequest, response: VercelResponse) => {
   const forSale = request.body.headers.subject.match(/uusi.*asunto/i);
   const forShow = request.body.headers.subject.match(/asuntoesittely/i);
 
@@ -58,8 +73,6 @@ export default async (request: VercelRequest, response: VercelResponse) => {
       );
     });
   } else {
-    const telegramClient = createClient(config.telegramBotToken);
-
     try {
       await telegramClient.sendMsg(
         config.telegramBotChannel,
@@ -94,7 +107,6 @@ async function sendApartment(
   directionsForApartments: DirectionsForApartment[],
   replyToId?: number
 ) {
-  const telegramClient = createClient(config.telegramBotToken);
   return withClient<void>(config.redisUrl, async (redisClient) => {
     const startRes = await telegramClient.sendMsg(
       config.telegramBotChannel,

@@ -13,6 +13,13 @@ const PLACES: Place[] = [
     },
   },
   {
+    id: "Juna-asema",
+    address: "Helsinki Train Station",
+    transitOptions: {
+      modes: [TravelMode.transit],
+    },
+  },
+  {
     id: "Tieto",
     address: "Keilalahdentie 2-4, 02150 Espoo",
     transitOptions: {
